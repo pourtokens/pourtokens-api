@@ -1,0 +1,17 @@
+name: deploy
+
+on:
+    push:
+        branches: [main]
+
+jobs:
+    ci:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+
+            - name: Deploy
+              env:
+                  DEPLOY_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+              run: |
+                  curl "$DEPLOY_URL"
