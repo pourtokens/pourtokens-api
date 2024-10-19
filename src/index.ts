@@ -65,7 +65,7 @@ app.post(
 			console.log("Transaction Details: ", transactionDetails);
 
 			sendTelegramNotification(
-				`Deposit ${bundle.amountRequested} ${bundle.token} to address: <a href="https://etherscan.io/address/${depositAddress}">${depositAddress}</a>`
+				`Deposit <strong>${bundle.amountRequested} ${bundle.token}</strong> to address: <a href="https://etherscan.io/address/${depositAddress}">${depositAddress}</a>`
 			);
 
 			res.status(200).send("Transaction processed successfully");
