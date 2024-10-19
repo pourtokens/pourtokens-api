@@ -1,17 +1,22 @@
-name: deploy
+name: deploy-api
 
 on:
     push:
-        branches: [main]
+        branches: ["main"]
+    workflow_dispatch:
 
 jobs:
-    ci:
+    deploy:
         runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v3
 
-            - name: Deploy
+        steps:
+            # Checks-out repository under $GITHUB_WORKSPACE, so the workflow job can access it
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            # Deploys the API to the server
+            - name: Deploy API
               env:
-                  DEPLOY_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+                  DEPLOY_URL: ${{ secrets.DEPLOY_HOOK_URL }}
               run: |
                   curl "$DEPLOY_URL"
