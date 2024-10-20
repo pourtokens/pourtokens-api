@@ -1,4 +1,5 @@
 import express, { Express, Request, Response, NextFunction } from "express";
+import cors from "cors";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -9,7 +10,14 @@ const app: Express = express();
 
 const PORT = process.env.PORT || 5000;
 
+const corsOptions = {
+	origin: [process.env.ALLOWED_ORIGIN || "http://localhost:3000"],
+	methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+	credentials: true,
+};
+
 app.use(express.json());
+app.use(cors(corsOptions));
 
 interface Bundle {
 	token: string;
@@ -76,5 +84,5 @@ app.post(
 );
 
 app.listen(PORT, () => {
-	console.log(`[server]: Server is running at http://localhost:${PORT}`);
+	console.log(`[server]: Server is running at port ${PORT}`);
 });
