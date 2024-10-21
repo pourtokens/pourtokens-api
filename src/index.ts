@@ -72,13 +72,20 @@ app.post(
 			console.log("Deposit Address: ", depositAddress);
 			console.log("Transaction Details: ", transactionDetails);
 
-			sendTelegramNotification(
+			await sendTelegramNotification(
 				`Deposit <strong>${bundle.amountRequested} ${bundle.token}</strong> to address: <a href="https://etherscan.io/address/${depositAddress}">${depositAddress}</a>`
 			);
 
 			res.status(200).send("Transaction processed successfully");
-		} catch (error) {
-			next(error);
+		} catch (notificationError) {
+			console.error(
+				"Error sending Telegram notification:",
+				notificationError
+			);
+
+			res.status(500).send(
+				"Error processing transaction: Unable to send notification"
+			);
 		}
 	}
 );

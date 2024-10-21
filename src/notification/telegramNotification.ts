@@ -17,8 +17,8 @@ export const sendTelegramNotification = async (message: string) => {
 	};
 
 	try {
-		await axios.post(url, params);
+		return axios.post(url, params);
 	} catch (error) {
-		console.error("Error sending notification:", error);
+		console.error(error);
 	}
 };
