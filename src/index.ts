@@ -93,4 +93,8 @@ app.post(
 
 app.listen(PORT, () => {
 	console.log(`[server]: Server is running at port ${PORT}`);
+
+	if (process.env.NODE_ENV === "production") {
+		sendTelegramNotification("Server is up and running...");
+	}
 });
