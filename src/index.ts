@@ -1,14 +1,24 @@
-import express, { Express, Request, Response, NextFunction } from "express";
+import express, {
+	Express,
+	Request,
+	Response,
+	NextFunction,
+	RequestHandler,
+} from "express";
+import { ethers } from "ethers";
 import cors from "cors";
 import dotenv from "dotenv";
 
 dotenv.config();
 
 import { sendTelegramNotification } from "./notification/telegramNotification";
+import networks from "./networks.json";
 
 const app: Express = express();
 
 const PORT = process.env.PORT || 5000;
+
+const infuraApiKey = process.env.INFURA_API_KEY;
 
 const corsOptions = {
 	origin: process.env.ALLOWED_ORIGIN || "http://localhost:3000",
@@ -36,6 +46,71 @@ interface RequestBody {
 	depositAddress: string;
 	transactionDetails: TransactionDetails;
 }
+
+const appendApiKeyToRpcUrl = (rpcUrl: string, apiKey: string | undefined) => {
+	if (apiKey && rpcUrl.includes("infura.io")) {
+		return `${rpcUrl}/v3/${apiKey}`;
+	}
+	return rpcUrl;
+};
+
+networks.forEach((network) => {
+	network.rpcUrl = appendApiKeyToRpcUrl(network.rpcUrl, infuraApiKey);
+});
+
+const getBalance = async (wallet: ethers.Wallet, provider: ethers.Provider) => {
+	wallet.connect(provider);
+
+	try {
+		const address = await wallet.getAddress();
+		const balanceInWei = await provider.getBalance(address);
+		const balance = ethers.formatEther(balanceInWei);
+
+		return balance;
+	} catch (error) {
+		console.error("Error fetching balance: ", error);
+	}
+};
+
+const getBalancesHandler: RequestHandler = async (
+	req: Request,
+	res: Response
+) => {
+	const privateKey = process.env.WALLET_PRIVATE_KEY as string;
+
+	if (!privateKey) {
+		res.status(500).json({
+			message: "Crucial environment variables are not set",
+		});
+	}
+
+	const balances: {
+		networkName: string;
+		amount: string | null;
+		symbol: string | undefined;
+	}[] = [];
+
+	const testNetworks: any[] = networks.filter(
+		(network) => network.type === "testnet"
+	);
+
+	for (const network of testNetworks) {
+		const providerUrl = network.rpcUrl;
+		const wallet = new ethers.Wallet(privateKey);
+		const provider = new ethers.JsonRpcProvider(providerUrl);
+
+		const balance = await getBalance(wallet, provider);
+		balances.push({
+			networkName: network.name,
+			amount: balance || null,
+			symbol: network.symbol,
+		});
+	}
+
+	res.status(200).json({ balances });
+};
+
+app.get("/balances", getBalancesHandler);
 
 app.post(
 	"/transaction",
@@ -91,6 +166,7 @@ app.post(
 	}
 );
 
+// Start the server
 app.listen(PORT, () => {
 	console.log(`[server]: Server is running at port ${PORT}`);
 
@@ -98,3 +174,6 @@ app.listen(PORT, () => {
 		sendTelegramNotification("Server is up and running...");
 	}
 });
+
+// Export for testing purposes
+export default app;
