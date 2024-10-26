@@ -1,14 +1,14 @@
 import express, { Express, Request, Response, NextFunction } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-
 dotenv.config();
 
-import { sendTelegramNotification } from "./notification/telegramNotification";
+import routes from "./routes";
+import { sendTelegramNotification } from "./utils/telegramNotification";
 
 const app: Express = express();
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 
 const corsOptions = {
 	origin: process.env.ALLOWED_ORIGIN || "http://localhost:3000",
@@ -19,6 +19,9 @@ const corsOptions = {
 
 app.use(express.json());
 app.use(cors(corsOptions));
+
+/* Routes */
+app.use("/api/v1", routes);
 
 interface Bundle {
 	token: string;
@@ -47,7 +50,6 @@ app.post(
 			res.status(400).send(
 				"All fields are required: bundle, depositAddress, transactionDetails"
 			);
-			return;
 		}
 
 		const requiredBundleProperties = ["token", "amountRequested"];
@@ -64,15 +66,13 @@ app.post(
 			)
 		) {
 			res.status(400).send("Invalid bundle or transaction details");
-			return;
 		}
 
-		try {
-			// Process the transaction here
-			console.log("Bundle: ", bundle);
-			console.log("Deposit Address: ", depositAddress);
-			console.log("Transaction Details: ", transactionDetails);
+		console.log("Bundle: ", bundle);
+		console.log("Deposit Address: ", depositAddress);
+		console.log("Transaction Details: ", transactionDetails);
 
+		try {
 			await sendTelegramNotification(
 				`Deposit <strong>${bundle.amountRequested} ${bundle.token}</strong> to address: <a href="https://etherscan.io/address/${depositAddress}">${depositAddress}</a>`
 			);
@@ -91,6 +91,7 @@ app.post(
 	}
 );
 
+// Start the server
 app.listen(PORT, () => {
 	console.log(`[server]: Server is running at port ${PORT}`);
 
@@ -98,3 +99,6 @@ app.listen(PORT, () => {
 		sendTelegramNotification("Server is up and running...");
 	}
 });
+
+// Export for testing purposes
+export default app;
